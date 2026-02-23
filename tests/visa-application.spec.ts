@@ -30,9 +30,9 @@ test.beforeAll(() => {
   }
 });
 
-// ─── Tests run in serial order ────────────────────────────────────────────────
+// ─── Tests run in parallel (up to 20 workers) ───────────────────────────────
 
-test.describe.serial('GDRFA Visa Application — Fill Only (No Submission)', () => {
+test.describe.parallel('GDRFA Visa Application — Fill Only (No Submission)', () => {
 
   const applications = readApplicationsFromExcel(EXCEL_FILE);
   const total        = applications.length;

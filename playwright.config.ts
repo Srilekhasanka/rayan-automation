@@ -5,10 +5,10 @@ const SESSION_FILE = path.resolve('auth/session.json');
 
 export default defineConfig({
   testDir: './tests',
-  fullyParallel: false,       // Run sequentially — portal forms are stateful
+  fullyParallel: true,        // Run applicants in parallel across workers
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 1,                 // Single worker to avoid overlapping sessions
+  workers: 20,                // 20 parallel browser instances
   reporter: 'html',
 
   timeout: 600_000,          // 10 minutes per test (form fill + document upload + pauses)
