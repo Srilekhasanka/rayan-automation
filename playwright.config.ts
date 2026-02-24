@@ -1,7 +1,12 @@
 import { defineConfig } from '@playwright/test';
 import * as path from 'path';
 
-const SESSION_FILE = path.resolve('auth/session.json');
+// On EC2, SERVER_ID env var determines which session file to use
+// Locally (no SERVER_ID), falls back to auth/session.json
+const SERVER_ID = process.env.SERVER_ID;
+const SESSION_FILE = SERVER_ID
+  ? path.resolve(`auth/sessions/session-${SERVER_ID}.json`)
+  : path.resolve('auth/session.json');
 
 export default defineConfig({
   testDir: './tests',

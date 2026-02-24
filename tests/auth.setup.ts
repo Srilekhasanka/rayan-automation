@@ -4,39 +4,52 @@ import * as fs from 'fs';
 
 const PORTAL_URL  = 'https://smart.gdrfad.gov.ae/SmartChannels_Th/Login.aspx';
 const PORTAL_HOME = 'https://smart.gdrfad.gov.ae/SmartChannels_Th/';
-export const SESSION_FILE = path.resolve('auth/session.json');
+
+// SESSION_ID env var: when set, saves to auth/sessions/session-<id>.json
+// When not set (or on EC2), defaults to auth/session.json
+const SESSION_ID = process.env.SESSION_ID;
+export const SESSION_FILE = SESSION_ID
+  ? path.resolve(`auth/sessions/session-${SESSION_ID}.json`)
+  : path.resolve('auth/session.json');
 
 const KEEP_ALIVE_INTERVAL_MS = 4 * 60 * 1000; // 4 min — well within the 15-min idle timeout
+const TOTAL_SESSIONS = parseInt(process.env.TOTAL_SESSIONS || '1', 10);
+const START_SESSION  = parseInt(process.env.START_SESSION  || SESSION_ID || '1', 10);
 
 setup('Manual login & save session', async ({ page }) => {
-  // Allow this test to stay open indefinitely while keep-alive is running
   setup.setTimeout(0);
 
-  // 1. Clear stale cookies so the portal cannot auto-redirect to the dashboard
-  await page.context().clearCookies();
-
-  // 2. Navigate to the login page
-  await page.goto(PORTAL_URL, { waitUntil: 'domcontentloaded' });
-  if (!page.url().includes('Login.aspx')) {
-    console.warn('[Auth] Portal redirected away from Login.aspx — retrying...');
-    await page.goto(PORTAL_URL, { waitUntil: 'domcontentloaded' });
+  const sessionsDir = path.resolve('auth/sessions');
+  if (!fs.existsSync(sessionsDir)) {
+    fs.mkdirSync(sessionsDir, { recursive: true });
   }
 
-  // 3. Pause — Playwright Inspector opens.
-  //    - Enter username & password
-  //    - Solve the CAPTCHA
-  //    - Click Login and wait until the dashboard loads
-  //    Then click "Resume" in the Inspector toolbar.
-  await page.pause();
+  // Loop through sessions — for single auth (no TOTAL_SESSIONS), runs once
+  for (let i = START_SESSION; i < START_SESSION + TOTAL_SESSIONS; i++) {
+    const sessionFile = path.resolve(`auth/sessions/session-${i}.json`);
+    console.log(`\n[Auth] ═══ Session ${i} of ${START_SESSION + TOTAL_SESSIONS - 1} ═══`);
 
-  // 4. Save the session (cookies + localStorage + sessionStorage)
-  console.log('\n[Auth] Saving session...');
-  await page.context().storageState({ path: SESSION_FILE });
-  console.log(`[Auth] Session saved → ${SESSION_FILE}`);
-  expect(fs.existsSync(SESSION_FILE)).toBeTruthy();
+    // 1. Clear stale cookies for a fresh login
+    await page.context().clearCookies();
 
-  // 5. Start keep-alive immediately — ping the portal every 4 min so the
-  //    server-side idle timer never reaches 15 minutes before npm test runs.
+    // 2. Navigate to the login page
+    await page.goto(PORTAL_URL, { waitUntil: 'domcontentloaded' });
+    if (!page.url().includes('Login.aspx')) {
+      console.warn('[Auth] Portal redirected away from Login.aspx — retrying...');
+      await page.goto(PORTAL_URL, { waitUntil: 'domcontentloaded' });
+    }
+
+    // 3. Pause — Solve CAPTCHA, login, then click Resume
+    console.log(`[Auth] Solve CAPTCHA and login for session ${i}, then click Resume.`);
+    await page.pause();
+
+    // 4. Save this session
+    await page.context().storageState({ path: sessionFile });
+    console.log(`[Auth] Session ${i} saved → ${sessionFile}`);
+    expect(fs.existsSync(sessionFile)).toBeTruthy();
+  }
+
+  // 5. Start keep-alive for the last session
   const keepAlive = setInterval(async () => {
     try {
       await page.evaluate(async (url: string) => {
@@ -48,15 +61,14 @@ setup('Manual login & save session', async ({ page }) => {
     }
   }, KEEP_ALIVE_INTERVAL_MS);
 
-  // 6. Stay paused so the browser (and session) remain alive while npm test runs
   console.log('\n[Auth] ─────────────────────────────────────────────────────────');
-  console.log('[Auth] Session is LIVE — keep-alive pinging every 4 min.');
+  console.log(`[Auth] All ${TOTAL_SESSIONS} session(s) saved in auth/sessions/`);
+  console.log('[Auth] Keep-alive pinging every 4 min.');
   console.log('[Auth] ► Open a NEW terminal and run:  npm test');
-  console.log('[Auth] ► Once npm test finishes, click Resume here to close.');
+  console.log('[Auth] ► Once done, click Resume here to close.');
   console.log('[Auth] ─────────────────────────────────────────────────────────\n');
   await page.pause();
 
-  // 7. User clicked Resume — clean up and exit
   clearInterval(keepAlive);
   console.log('[Auth] Keep-alive stopped. Auth browser closed.');
 });

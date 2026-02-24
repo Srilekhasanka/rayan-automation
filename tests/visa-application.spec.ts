@@ -4,8 +4,16 @@ import * as path from 'path';
 import { fillApplicationForm } from '../src/automation/gdrfa-portal';
 import { readApplicationsFromExcel } from '../src/utils/excel-reader';
 
-const SESSION_FILE = path.resolve('auth/session.json');
-const EXCEL_FILE   = path.resolve('data/applications/applications.xlsx');
+// On EC2, SERVER_ID picks the right session; locally falls back to auth/session.json
+const SERVER_ID = process.env.SERVER_ID;
+const SESSION_FILE = SERVER_ID
+  ? path.resolve(`auth/sessions/session-${SERVER_ID}.json`)
+  : path.resolve('auth/session.json');
+const EXCEL_FILE = path.resolve('data/applications/applications.xlsx');
+
+// Multi-server partitioning: each EC2 server processes only its chunk of applicants
+const TOTAL_SERVERS = parseInt(process.env.TOTAL_SERVERS || '1', 10);
+const serverIndex   = SERVER_ID ? parseInt(SERVER_ID, 10) : 1;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -34,8 +42,18 @@ test.beforeAll(() => {
 
 test.describe.parallel('GDRFA Visa Application — Fill Only (No Submission)', () => {
 
-  const applications = readApplicationsFromExcel(EXCEL_FILE);
+  const allApplications = readApplicationsFromExcel(EXCEL_FILE);
+  const totalAll        = allApplications.length;
+
+  // Partition: each server gets its own slice of applicants
+  const chunkSize    = Math.ceil(totalAll / TOTAL_SERVERS);
+  const startIndex   = (serverIndex - 1) * chunkSize;
+  const applications = allApplications.slice(startIndex, startIndex + chunkSize);
   const total        = applications.length;
+
+  if (TOTAL_SERVERS > 1) {
+    console.log(`[Server ${serverIndex}/${TOTAL_SERVERS}] Processing rows ${startIndex + 1}–${startIndex + total} of ${totalAll}`);
+  }
 
   if (total === 0) {
     test('no applicants found', () => {
@@ -47,9 +65,10 @@ test.describe.parallel('GDRFA Visa Application — Fill Only (No Submission)', (
   }
 
   for (let i = 0; i < applications.length; i++) {
-    const application = applications[i];
-    const label       = `applicant-${String(i + 1).padStart(String(total).length, '0')}`;
-    const prefix      = `[Applicant ${i + 1}/${total} — ${label}]`;
+    const application  = applications[i];
+    const globalIndex  = startIndex + i + 1; // Original row number in the Excel
+    const label        = `applicant-${String(globalIndex).padStart(String(totalAll).length, '0')}`;
+    const prefix       = `[Applicant ${globalIndex}/${totalAll} — ${label}]`;
 
     test(`${label} — Fill form (no submission)`, async ({ page }) => {
       console.log(`\n${prefix} Loading application...`);
