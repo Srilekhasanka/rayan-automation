@@ -69,7 +69,7 @@ export class GdrfaPortalPage {
 
   async uploadDocuments(docs: ApplicationDocuments): Promise<void> {
     console.log('[Upload] Starting document upload...');
-    await this.page.waitForLoadState('networkidle', { timeout: 20000 }).catch(() => {});
+    await this.waitForAjax(20000);
 
     // Wait for upload zone JS to initialise (file inputs must be in the DOM)
     await this.page.locator('input[type="file"][data-document-type]').first()
@@ -114,14 +114,49 @@ export class GdrfaPortalPage {
       await this.handleExistingApplicationPopup(popupFrame);
     }
 
-    // Continue button appears only after all mandatory uploads are complete
+    // Continue button appears only after all mandatory uploads are complete.
+    // It may be a standalone button or inside the "Actions" dropdown.
     const continueBtn = this.page.locator(
       'input[value="Continue"], button:has-text("Continue"), a:has-text("Continue")'
     ).first();
-    await continueBtn.waitFor({ state: 'visible', timeout: 60000 });
+
+    let found = await continueBtn.waitFor({ state: 'visible', timeout: 30000 })
+      .then(() => true).catch(() => false);
+
+    if (!found) {
+      // Fallback: try expanding the "Actions" dropdown — Continue may be inside it
+      console.log('[Upload] Continue not visible — checking Actions dropdown...');
+      const actionsBtn = this.page.locator('a:has-text("Actions"), button:has-text("Actions")').first();
+      if (await actionsBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await actionsBtn.click();
+        await this.page.waitForTimeout(500);
+        found = await continueBtn.waitFor({ state: 'visible', timeout: 10000 })
+          .then(() => true).catch(() => false);
+      }
+    }
+
+    if (!found) {
+      // Diagnostic: log which mandatory upload slots are still empty
+      const emptySlots = await this.page.evaluate(() => {
+        const slots = Array.from(document.querySelectorAll('input[type="file"][data-document-type]'));
+        return slots
+          .filter(el => {
+            const container = el.closest('[class*="upload"], [class*="Upload"]')
+              || el.parentElement?.parentElement?.parentElement;
+            return container?.textContent?.includes('Drag here or click to upload');
+          })
+          .map(el => el.getAttribute('data-document-type') ?? 'unknown');
+      });
+      if (emptySlots.length > 0) {
+        console.warn(`[Upload] Mandatory slots still empty: ${JSON.stringify(emptySlots)}`);
+      }
+      // Last chance — wait the remaining time
+      await continueBtn.waitFor({ state: 'visible', timeout: 20000 });
+    }
+
     await continueBtn.scrollIntoViewIfNeeded();
     await continueBtn.click({ force: true, noWaitAfter: true });
-    await this.page.waitForLoadState('networkidle', { timeout: 20000 }).catch(() => {});
+    await this.waitForAjax(20000);
     await this.waitForLoaderToDisappear();
     console.log('[Upload] Continue clicked — done.');
   }
@@ -178,7 +213,7 @@ export class GdrfaPortalPage {
       }
 
       // Wait for the upload to process
-      await this.page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+      await this.waitForAjax();
 
       // Verify the upload took effect
       const filled = await this.isUploadSlotFilled(label);
@@ -257,13 +292,19 @@ export class GdrfaPortalPage {
       await firstService.click();
     }
 
-    await this.page.waitForLoadState('networkidle', { timeout: 20000 }).catch(() => {});
+    // Wait for the form page to actually load (URL should contain EntryPermit or SmartChannels)
+    await this.page.waitForURL(
+      url => url.pathname.includes('EntryPermit') || url.pathname.includes('SmartChannels/'),
+      { timeout: 25000 }
+    ).catch(() => {});
+    await this.waitForAjax(20000);
     console.log('[Nav] Form page loaded. URL:', this.page.url());
   }
 
   private async waitForPageSettle(): Promise<void> {
     await this.page.waitForLoadState('domcontentloaded', { timeout: 15000 }).catch(() => {});
-    await this.page.waitForLoadState('networkidle',      { timeout: 15000 }).catch(() => {});
+    await this.waitForAjax();
+    await this.waitForLoaderToDisappear();
   }
 
   // ── Passport header (Passport Type → Nationality → Search Data) ────────────
@@ -289,7 +330,7 @@ export class GdrfaPortalPage {
       return true;
     });
     if (set) {
-      await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+      await this.waitForAjax();
       console.log('[Form] Visit Reason → Tourism.');
     } else {
       console.warn('[Form] Visit Reason select not found.');
@@ -311,7 +352,7 @@ export class GdrfaPortalPage {
       return true;
     }, passportType);
     if (set) {
-      await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+      await this.waitForAjax();
       console.log('[Form] Passport Type set.');
     } else {
       console.warn('[Form] Passport Type select not found.');
@@ -346,7 +387,7 @@ export class GdrfaPortalPage {
       return { found: true, matched: match.text };
     }, name);
     if (result.found) {
-      await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+      await this.waitForAjax();
       console.log(`[Form] Nationality set: "${result.matched}".`);
     } else {
       console.warn(`[Form] Nationality not found for: "${name}".`);
@@ -367,7 +408,7 @@ export class GdrfaPortalPage {
       return { found: true, matched: match.text };
     }, name);
     if (result.found) {
-      await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+      await this.waitForAjax();
       console.log(`[Form] Previous Nationality set: "${result.matched}".`);
     } else {
       console.warn(`[Form] Previous Nationality not found for: "${name}".`);
@@ -382,7 +423,7 @@ export class GdrfaPortalPage {
     await btn.waitFor({ state: 'visible', timeout: 10000 });
     await btn.click();
     // Wait for the portal AJAX call to populate SmartInput fields and re-render widgets
-    await this.page.waitForLoadState('networkidle', { timeout: 20000 }).catch(() => {});
+    await this.waitForAjax(20000);
 
     // Wait for key passport input fields to appear in the DOM
     console.log('[Form] Waiting for passport fields to load...');
@@ -407,7 +448,7 @@ export class GdrfaPortalPage {
     const firstFilled = await this.editAndFill('inpFirsttNameEn', passport.firstName);
     if (firstFilled) {
       await this.page.evaluate(() => (window as any).translateInputText?.('inpFirsttNameEn'));
-      await this.page.waitForTimeout(200);
+      await this.waitForTranslation('inpFirsttNameEn');
       console.log('[Form] First Name filled + translated.');
     }
 
@@ -416,7 +457,7 @@ export class GdrfaPortalPage {
       const midFilled = await this.editAndFill('inpMiddleNameEn', passport.middleName);
       if (midFilled) {
         await this.page.evaluate(() => (window as any).translateInputText?.('inpMiddleNameEn'));
-        await this.page.waitForTimeout(200);
+        await this.waitForTranslation('inpMiddleNameEn');
         console.log('[Form] Middle Name filled + translated.');
       }
     } else {
@@ -427,7 +468,7 @@ export class GdrfaPortalPage {
     const lastFilled = await this.editAndFill('inpLastNameEn', passport.lastName);
     if (lastFilled) {
       await this.page.evaluate(() => (window as any).translateInputText?.('inpLastNameEn'));
-      await this.page.waitForTimeout(200);
+      await this.waitForTranslation('inpLastNameEn');
       console.log('[Form] Last Name filled + translated.');
     }
   }
@@ -455,7 +496,7 @@ export class GdrfaPortalPage {
         const el = document.querySelector<HTMLInputElement>('input[data-staticid="inpDateOfBirth"]');
         if (el) el.dispatchEvent(new Event('change', { bubbles: true }));
       });
-      await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+      await this.waitForAjax();
       console.log('[Form] Date of Birth filled.');
     }
 
@@ -465,7 +506,7 @@ export class GdrfaPortalPage {
     if (bcResult.skipped) {
       console.log(`[Skip] Birth Country already set: "${bcResult.matched}".`);
     } else if (bcResult.found) {
-      await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+      await this.waitForAjax();
       console.log(`[Form] Birth Country set: "${bcResult.matched}".`);
     } else {
       console.warn(`[Form] Birth Country not found for: "${birthCountry}".`);
@@ -479,7 +520,7 @@ export class GdrfaPortalPage {
     const bpFilled = await this.editAndFill('inpApplicantBirthPlaceEn', birthPlace);
     if (bpFilled) {
       await this.page.evaluate(() => (window as any).translateInputText('inpApplicantBirthPlaceEn'));
-      await this.page.waitForTimeout(200);
+      await this.waitForTranslation('inpApplicantBirthPlaceEn');
       console.log('[Form] Birth Place EN filled + translated.');
     }
 
@@ -527,7 +568,7 @@ export class GdrfaPortalPage {
           const el = document.querySelector<HTMLInputElement>('input[data-staticid="inpPassportIssueDate"]');
           if (el) el.dispatchEvent(new Event('change', { bubbles: true }));
         });
-        await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+        await this.waitForAjax();
         console.log('[Form] Passport Issue Date filled.');
       }
     } else {
@@ -552,7 +593,7 @@ export class GdrfaPortalPage {
         const el = document.querySelector<HTMLInputElement>('input[data-staticid="inpPassportExpiryDate"]');
         if (el) el.dispatchEvent(new Event('change', { bubbles: true }));
       });
-      await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+      await this.waitForAjax();
       console.log('[Form] Passport Expiry Date filled.');
     }
 
@@ -564,7 +605,7 @@ export class GdrfaPortalPage {
       const poiFilled = await this.editAndFill('inpPassportPlaceIssueEn', placeOfIssue);
       if (poiFilled) {
         await this.page.evaluate(() => (window as any).translateInputText?.('inpPassportPlaceIssueEn'));
-        await this.page.waitForTimeout(200);
+        await this.waitForTranslation('inpPassportPlaceIssueEn');
         console.log('[Form] Place of Issue EN filled + translated.');
       }
     } else {
@@ -586,7 +627,7 @@ export class GdrfaPortalPage {
           cb.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         }
       });
-      await this.page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+      await this.waitForAjax();
       console.log('[Form] Is Inside UAE checked.');
     }
 
@@ -596,7 +637,7 @@ export class GdrfaPortalPage {
       const motherFilled = await this.editAndFill('inpMotherNameEn', applicant.motherNameEN);
       if (motherFilled) {
         await this.page.evaluate(() => (window as any).translateInputText?.('inpMotherNameEn'));
-        await this.page.waitForTimeout(200);
+        await this.waitForTranslation('inpMotherNameEn');
         console.log('[Form] Mother Name EN filled + translated.');
       }
     } else {
@@ -623,7 +664,7 @@ export class GdrfaPortalPage {
       if (rResult.skipped) {
         console.log(`[Skip] Religion already set: "${rResult.matched}".`);
       } else if (rResult.found) {
-        await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+        await this.waitForAjax();
         console.log(`[Form] Religion set: "${rResult.matched}".`);
       } else {
         console.warn(`[Form] Religion not found for: "${applicant.religion}".`);
@@ -680,7 +721,7 @@ export class GdrfaPortalPage {
         if (await faithOption.isVisible({ timeout: 5000 }).catch(() => false)) {
           const matchedText = await faithOption.textContent() ?? '';
           await faithOption.click();
-          await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+          await this.waitForAjax();
           console.log(`[Form] Faith set: "${matchedText.trim()}".`);
         } else {
           // Fallback: set value programmatically
@@ -817,7 +858,7 @@ export class GdrfaPortalPage {
       if (emResult.skipped) {
         console.log(`[Skip] Emirate already set: "${emResult.matched}".`);
       } else if (emResult.found) {
-        await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+        await this.waitForAjax();
         console.log(`[Form] Emirate set: "${emResult.matched}".`);
       } else {
         console.warn(`[Form] Emirate not found for: "${contact.uaeEmirate}".`);
@@ -835,7 +876,7 @@ export class GdrfaPortalPage {
       if (cityResult.skipped) {
         console.log(`[Skip] City already set: "${cityResult.matched}".`);
       } else if (cityResult.found) {
-        await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+        await this.waitForAjax();
         console.log(`[Form] City set: "${cityResult.matched}".`);
       } else {
         console.warn(`[Form] City not found for: "${contact.uaeCity}".`);
@@ -893,7 +934,7 @@ export class GdrfaPortalPage {
       if (ocResult.skipped) {
         console.log(`[Skip] Outside Country already set: "${ocResult.matched}".`);
       } else if (ocResult.found) {
-        await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+        await this.waitForAjax();
         console.log(`[Form] Outside Country set: "${ocResult.matched}".`);
       } else {
         console.warn(`[Form] Outside Country not found for: "${countryName}".`);
@@ -973,7 +1014,7 @@ export class GdrfaPortalPage {
     if (await faithOption.isVisible({ timeout: 5000 }).catch(() => false)) {
       const matchedText = await faithOption.textContent() ?? '';
       await faithOption.click();
-      await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+      await this.waitForAjax();
       console.log(`[Form] Faith retry set: "${matchedText.trim()}".`);
     } else {
       // Last resort: programmatic
@@ -1175,17 +1216,58 @@ export class GdrfaPortalPage {
    * Waits for the OutSystems Feedback_AjaxWait loader to disappear.
    * The portal shows this spinner during AJAX operations and page transitions.
    */
-  private async waitForLoaderToDisappear(): Promise<void> {
-    const loader = this.page.locator('div.Feedback_AjaxWait:visible');
+  private async waitForLoaderToDisappear(timeoutMs = 30000): Promise<void> {
+    const loader = this.page.locator('div.Feedback_AjaxWait');
     try {
       // If a loader is currently visible, wait for it to hide
       if (await loader.isVisible().catch(() => false)) {
-        console.log('[Loader] Waiting for loader to disappear...');
-        await loader.waitFor({ state: 'hidden', timeout: 30000 });
-        console.log('[Loader] Loader gone.');
+        await loader.waitFor({ state: 'hidden', timeout: timeoutMs });
       }
     } catch {
       // Loader may have already disappeared
+    }
+  }
+
+  /**
+   * The standard wait after any action that triggers an AJAX round-trip.
+   * 1. Waits for the OutSystems AJAX loader to appear then disappear
+   * 2. Falls back to networkidle if no loader appears (fast ops)
+   *
+   * Use this INSTEAD of bare `waitForLoadState('networkidle').catch(() => {})`.
+   */
+  private async waitForAjax(timeoutMs = 15000): Promise<void> {
+    const loader = this.page.locator('div.Feedback_AjaxWait');
+    try {
+      // Give the loader a moment to appear (it won't for very fast operations)
+      const appeared = await loader.waitFor({ state: 'visible', timeout: 2000 })
+        .then(() => true).catch(() => false);
+      if (appeared) {
+        await loader.waitFor({ state: 'hidden', timeout: timeoutMs });
+        return; // Loader cycle completed — DOM is stable
+      }
+    } catch { /* loader disappeared before we could catch it */ }
+    // Fallback: no loader seen — wait for network to settle
+    await this.page.waitForLoadState('networkidle', { timeout: timeoutMs }).catch(() => {});
+  }
+
+  /**
+   * Wait for an Arabic translation field to be populated after calling translateInputText.
+   * Falls back to a short delay if the field isn't found or doesn't populate.
+   */
+  private async waitForTranslation(englishStaticId: string): Promise<void> {
+    // Map EN static ID to AR counterpart (convention: inpFirsttNameEn → inpFirstNameAr)
+    const arId = englishStaticId.replace(/En$/, 'Ar').replace('inpFirstt', 'inpFirst');
+    try {
+      await this.page.waitForFunction(
+        (id: string) => {
+          const el = document.querySelector<HTMLInputElement>(`input[data-staticid="${id}"]`);
+          return el && el.value.trim().length > 0;
+        },
+        arId,
+        { timeout: 3000 }
+      );
+    } catch {
+      // Translation service may be slow or field may not exist — don't block
     }
   }
 
@@ -1283,7 +1365,7 @@ export class GdrfaPortalPage {
     console.log('[Form] Clicked Continue on popup.');
 
     // Wait for the popup iframe to close and page to settle
-    await this.page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
+    await this.waitForAjax(30000);
     await this.waitForLoaderToDisappear();
     console.log('[Form] Popup dismissed.');
   }
@@ -1572,7 +1654,7 @@ export class GdrfaPortalPage {
     if (await firstResult.isVisible({ timeout: 3000 }).catch(() => false)) {
       const matchedText = await firstResult.textContent() ?? '';
       await firstResult.click();
-      await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+      await this.waitForAjax();
       return matchedText.trim();
     }
 
