@@ -4,16 +4,6 @@
       "name": "f5_cspm",
       "value": "1234",
       "domain": "smart.gdrfad.gov.ae",
-      "path": "/SmartChannels_LandingPages",
-      "expires": -1,
-      "httpOnly": false,
-      "secure": false,
-      "sameSite": "Lax"
-    },
-    {
-      "name": "f5_cspm",
-      "value": "1234",
-      "domain": "smart.gdrfad.gov.ae",
       "path": "/SmartChannels_Th",
       "expires": -1,
       "httpOnly": false,
@@ -31,18 +21,8 @@
       "sameSite": "Lax"
     },
     {
-      "name": "_GRECAPTCHA",
-      "value": "09AKhCRwiJVxrhZg2fPWW3QPjf-faM2kJSifcHuKJvC-XI-hLm-UiTyJG1g9cnxqjw1qcL7RX8-ip8emQ47Bg7qXY",
-      "domain": "www.google.com",
-      "path": "/recaptcha",
-      "expires": 1786980376.847584,
-      "httpOnly": true,
-      "secure": true,
-      "sameSite": "None"
-    },
-    {
       "name": "ASP.NET_SessionId",
-      "value": "iylf20f1qq5ei3plu5lggcg3",
+      "value": "ivqbl2lcr5p1jur43koccosk",
       "domain": "smart.gdrfad.gov.ae",
       "path": "/",
       "expires": -1,
@@ -52,27 +32,17 @@
     },
     {
       "name": "osVisitor",
-      "value": "6429b062-cc58-43b8-95ba-996781feb185",
+      "value": "72aa4402-f2d1-461f-aed9-75db2bdd3e18",
       "domain": "smart.gdrfad.gov.ae",
       "path": "/",
-      "expires": 1805988447.343315,
-      "httpOnly": true,
-      "secure": true,
-      "sameSite": "Lax"
-    },
-    {
-      "name": "osVisit",
-      "value": "b7787f23-d280-4401-8b08-c89888c1194a",
-      "domain": "smart.gdrfad.gov.ae",
-      "path": "/",
-      "expires": 1771430247.34353,
+      "expires": 1806162574.494489,
       "httpOnly": true,
       "secure": true,
       "sameSite": "Lax"
     },
     {
       "name": "dtCookie",
-      "value": "v_4_srv_1_sn_37FFDFC46E2E071F9C3598E7B814D2BD_perc_100000_ol_0_mul_1_app-3A4d88c9ad0bd7126a_1_rcs-3Acss_0",
+      "value": "v_4_srv_1_sn_0DDC2B0B4D96655EC1F5188EC7C42E0B_perc_100000_ol_0_mul_1_app-3A4d88c9ad0bd7126a_0_rcs-3Acss_1",
       "domain": ".gdrfad.gov.ae",
       "path": "/",
       "expires": -1,
@@ -82,28 +52,18 @@
     },
     {
       "name": "OClmoOot",
-      "value": "A2HCWnGcAQAA0lZZXDDxb0zI_JoMFCGCmH_d9VJPSorJAGRS9KthcbDx65ntAWfWP4SucmVTwH8AAEB3AAAAAA|1|0|a52e9c66dc6db521e60fe0c86021d73a9e89237c",
+      "value": "A3PBvXucAQAA8B5v2hy4OYaXUJyOG_xwyUW5qMVodATK2a7ImtDa2DpJAcSVAWfWP7eucmVTwH8AAEB3AAAAAA|1|0|defdc16bc453cf29d0f8886b2ef56915368f0e54",
       "domain": "smart.gdrfad.gov.ae",
       "path": "/",
-      "expires": 1805988437.871008,
+      "expires": 1806162571.649003,
       "httpOnly": false,
       "secure": false,
       "sameSite": "Lax"
     },
     {
       "name": "TS01305ae2",
-      "value": "01d9cd17caae784dd699773f5c8765b0a0d17bc06a6121a23825889b58f742c90145df381bf0e56b7d2d870bd68889e5755d53a5a41b4f1e62f142789621b8e10d3d0690a3",
+      "value": "01d9cd17ca0c21b98eae29b8a6d5b8eb295e1dce11d398632f3879f01d88dd29e9049aff22c9c2f329ea16cfb80665810a5454601949b4ead9191281bfb03c47877b2d138f",
       "domain": "smart.gdrfad.gov.ae",
-      "path": "/",
-      "expires": -1,
-      "httpOnly": false,
-      "secure": false,
-      "sameSite": "Lax"
-    },
-    {
-      "name": "rxVisitor",
-      "value": "1771428300743OH73GRVU5RBGF2O4N6ULPRGOENTS11RI",
-      "domain": ".gdrfad.gov.ae",
       "path": "/",
       "expires": -1,
       "httpOnly": false,
@@ -115,7 +75,7 @@
       "value": "desktop small",
       "domain": "smart.gdrfad.gov.ae",
       "path": "/",
-      "expires": 1802532440,
+      "expires": 1802706572,
       "httpOnly": false,
       "secure": true,
       "sameSite": "Lax"
@@ -131,108 +91,8 @@
       "sameSite": "Lax"
     },
     {
-      "name": "Locale",
-      "value": "en-US",
-      "domain": ".gdrfad.gov.ae",
-      "path": "/",
-      "expires": 1805988434.95191,
-      "httpOnly": true,
-      "secure": true,
-      "sameSite": "Strict"
-    },
-    {
-      "name": "TS01348e9b",
-      "value": "01d9cd17cab61ca7d810ab894bac16e4849249848fe7404632c651f2630e343576dc7d02696bd353a6eefdc51f9d5b16547cf149b6a271c829f774415667d032e616660ffc",
-      "domain": ".gdrfad.gov.ae",
-      "path": "/",
-      "expires": -1,
-      "httpOnly": false,
-      "secure": false,
-      "sameSite": "Lax"
-    },
-    {
-      "name": "dtsrVID",
-      "value": "1771428362607",
-      "domain": ".gdrfad.gov.ae",
-      "path": "/",
-      "expires": -1,
-      "httpOnly": false,
-      "secure": false,
-      "sameSite": "Lax"
-    },
-    {
-      "name": "Users.sid",
-      "value": "57560347648267377118144071779128231682",
-      "domain": "smart.gdrfad.gov.ae",
-      "path": "/",
-      "expires": -1,
-      "httpOnly": true,
-      "secure": true,
-      "sameSite": "Lax"
-    },
-    {
-      "name": "nr1Users",
-      "value": "lid%3dmih7lfag2CEVmXWA8uTgSA%3d%3d6UoTTJ0U8jzr8lWcNd5x4w%3d%3d%3btuu%3d63907025534%3bexp%3d63909617234%3brhs%3dEccPqSBl2hPrZlN79A8FSteAyOY%3d%3bhmc%3d8%2bhDzhtHow0PmDpvkUt7ifeil68%3d",
-      "domain": "smart.gdrfad.gov.ae",
-      "path": "/",
-      "expires": 1802964434.504605,
-      "httpOnly": true,
-      "secure": true,
-      "sameSite": "Lax"
-    },
-    {
-      "name": "nr2Users",
-      "value": "crf%3dJ5ItQxqVSMnkpKihrv1672tpoP0%3d%3buid%3d615976%3bunm%3dITTESTIN",
-      "domain": "smart.gdrfad.gov.ae",
-      "path": "/",
-      "expires": 1802964434.504726,
-      "httpOnly": false,
-      "secure": true,
-      "sameSite": "Lax"
-    },
-    {
-      "name": "Users",
-      "value": "86944fd7-d5e6-4bee-a77f-171eeb5da246",
-      "domain": "smart.gdrfad.gov.ae",
-      "path": "/",
-      "expires": 1772292435.504839,
-      "httpOnly": true,
-      "secure": true,
-      "sameSite": "Lax"
-    },
-    {
-      "name": "_notify_type",
-      "value": "EDNRD",
-      "domain": "smart.gdrfad.gov.ae",
-      "path": "/",
-      "expires": 1771514835.505068,
-      "httpOnly": true,
-      "secure": true,
-      "sameSite": "Strict"
-    },
-    {
-      "name": "_notify",
-      "value": "3",
-      "domain": "smart.gdrfad.gov.ae",
-      "path": "/",
-      "expires": 1771514835.505142,
-      "httpOnly": true,
-      "secure": true,
-      "sameSite": "Strict"
-    },
-    {
-      "name": "Terms",
-      "value": "",
-      "domain": "smart.gdrfad.gov.ae",
-      "path": "/",
-      "expires": -1,
-      "httpOnly": true,
-      "secure": true,
-      "sameSite": "Strict"
-    },
-    {
       "name": "TS011ea849",
-      "value": "01d9cd17cafd70428ac272af75177b3509d6f934a4e7404632c651f2630e343576dc7d02693b855fa90e9bafe3948c4e9b701c2f3f3270e4decfc54b70e7422a3a6ddeebbdc19c8eea359c94379c8c0e2d274ff2a2fff9443bd8da0be67f3b04619f7308c41b2349313d79a76f29b6303ac642d4d5bdf931e7b093f313be9815ae9f2d4c900eff33cddb2052aaa87d49ef73ae32ab2ad17968361a899abe6ac371bc2e559bf3bc28c0a631260edda39967cf800db774a67b0a12648a0e8e88f89691e155e48f11884dd8134a0b1bd20000b68b8142bf584e95df7096af5837fa9f06771f6a9c1970a199938d9c190e0252a4e03112d833c8d78d4f2cd0ffe210d942093d9d52003eb25b96daa0f530c61a26d6836c",
+      "value": "01d9cd17ca72643b9efc8d90014ba8f99f17b55e601b2023e8564eec1c70281f0996cbb1619ba49ddc721295a78d1aa917070a762c0928a3577d7a9d51488e51e00ccfe0083cb47efcb17b1d3ccd23a1f5bbd4d159094a624d84bbc830b8fbff0df4ba492db61fe78b4b1e97ce5b83daa80afcf79747995cad2dd1804d14cab912c95c956be8fac1f030f6cfdaef8db863c05407ff",
       "domain": ".smart.gdrfad.gov.ae",
       "path": "/",
       "expires": -1,
@@ -241,28 +101,18 @@
       "sameSite": "Lax"
     },
     {
-      "name": "dtSa",
-      "value": "-",
+      "name": "Locale",
+      "value": "en-US",
       "domain": ".gdrfad.gov.ae",
       "path": "/",
-      "expires": -1,
-      "httpOnly": false,
-      "secure": false,
-      "sameSite": "Lax"
+      "expires": 1806162570.750162,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Strict"
     },
     {
-      "name": "rxvt",
-      "value": "1771430246301|1771428300747",
-      "domain": ".gdrfad.gov.ae",
-      "path": "/",
-      "expires": -1,
-      "httpOnly": false,
-      "secure": false,
-      "sameSite": "Lax"
-    },
-    {
-      "name": "dtPC",
-      "value": "1$228438397_361h1vHUOEKEGGNJHUIDBNRMMJUFKFCEVVRKJT-0e0",
+      "name": "TS01348e9b",
+      "value": "01d9cd17caae48c80502e3bc7104d8d565798cc6971b2023e8564eec1c70281f0996cbb1610d9fb6d5d1dfba301323a14d4f9cf7152005980875bb4a4f1a9351a95a94c029",
       "domain": ".gdrfad.gov.ae",
       "path": "/",
       "expires": -1,
@@ -272,12 +122,22 @@
     },
     {
       "name": "pageLoadedFromBrowserCache",
-      "value": "false",
+      "value": "true",
       "domain": "smart.gdrfad.gov.ae",
       "path": "/",
       "expires": -1,
       "httpOnly": false,
       "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "f5avr1008807129aaaaaaaaaaaaaaaa_cspm_",
+      "value": "HCIEAMFDKJFFJIEPGDNNIENHAIMNMHGMMJKOKFMHNDONIALDGKIEHDOKLHLBFGPIGEICAOGPFEBIJDHJENDACCGPBNLLDPILGHLELEHAMGFEGBHOBBGKFNJIFIILOIMB",
+      "domain": "smart.gdrfad.gov.ae",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
       "sameSite": "Lax"
     }
   ],
@@ -286,36 +146,16 @@
       "origin": "https://smart.gdrfad.gov.ae",
       "localStorage": [
         {
-          "name": "dyn-sr-retry-HUOEKEGGNJHUIDBNRMMJUFKFCEVVRKJT-0.1771428362607.11",
-          "value": "srBm.1771428404711.1771428406990.[object Object]"
-        },
-        {
           "name": "theme",
           "value": "red"
         },
         {
-          "name": "dtsrNOSR",
-          "value": "HUOEKEGGNJHUIDBNRMMJUFKFCEVVRKJT-0|150"
+          "name": "FTzyeq12rr",
+          "value": "A3PBvXucAQAA2HBXe6E3h0XIxuU85FB1-3zKP_ja0xHcfEU8y9Da2DpJAcSVAWfWP7eucmVTwH8AAEB3AAAAAA=="
         },
         {
           "name": "l_FTzyeq12rr",
-          "value": "17714283439822950844159"
-        },
-        {
-          "name": "dyn-sr-retryKeys",
-          "value": "HUOEKEGGNJHUIDBNRMMJUFKFCEVVRKJT-0.1771428362607.11"
-        },
-        {
-          "name": "_grecaptcha",
-          "value": "09AKhCRwgM0rxNIi2kA0cignxsBl7fyevrEPmVOWiOTwQPQj2o-5tZr-QO6FDDdxkkXavHeSXCq_xkBQZPz2-eYW-nsEw2qFl905uwVnIBoNlW2SZKuykXdFIJmDIC5axG"
-        },
-        {
-          "name": "FTzyeq12rr",
-          "value": "A2HCWnGcAQAAQ_IxeFjUQs79EN03HWwhH0s9VCBseQfA-dTZlqthcbDx65ntAWfWP4SucmVTwH8AAEB3AAAAAA=="
-        },
-        {
-          "name": "dtsrE",
-          "value": "HUOEKEGGNJHUIDBNRMMJUFKFCEVVRKJT-0=disabled"
+          "value": "1771602565565174122553"
         }
       ]
     },
@@ -324,11 +164,7 @@
       "localStorage": [
         {
           "name": "rc::a",
-          "value": "bjMyNzlrMWlpaGg1Yw=="
-        },
-        {
-          "name": "rc::f",
-          "value": "0aABtgWgjxO0_BBBaVbr6cLOFSWhkSgKQXQbbBHuzMIHXgbBVoYy4FYO-2GCp5goq9l7T05pQ"
+          "value": "MTMybXI0djEwYnlteWw="
         }
       ]
     }
