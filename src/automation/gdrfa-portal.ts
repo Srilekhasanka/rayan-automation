@@ -58,6 +58,9 @@ export class GdrfaPortalPage {
 
       await this.clickContinue();
 
+      // Verify page actually transitioned to the Documents/Upload step
+      await this.waitForUploadPage();
+
       // Upload documents on the Attachments tab
       await this.uploadDocuments(application.documents);
 
@@ -69,11 +72,15 @@ export class GdrfaPortalPage {
 
   async uploadDocuments(docs: ApplicationDocuments): Promise<void> {
     console.log('[Upload] Starting document upload...');
-    await this.waitForAjax(20000);
 
-    // Wait for upload zone JS to initialise (file inputs must be in the DOM)
-    await this.page.locator('input[type="file"][data-document-type]').first()
-      .waitFor({ state: 'attached', timeout: 15000 });
+    // Guard: ensure file inputs exist (waitForUploadPage already confirmed, but double-check)
+    const hasInputs = await this.page.locator('input[type="file"][data-document-type]').first()
+      .waitFor({ state: 'attached', timeout: 5000 })
+      .then(() => true).catch(() => false);
+    if (!hasInputs) {
+      const url = this.page.url();
+      throw new Error(`[Upload] Not on the upload page — no file inputs found. URL: ${url}`);
+    }
 
     // Map document type labels to file paths.
     // Labels must match the data-document-type attribute on each input[type="file"].
@@ -1112,12 +1119,26 @@ export class GdrfaPortalPage {
       return val.length > 0 && !val.includes('Select');
     };
 
-    // ── Passport Names ────────────────────────────────────────────────────
+    // ── Passport Names (EN) ─────────────────────────────────────────────
     if (app.passport.firstName && !await inputHasValue('inpFirsttNameEn')) {
       empty.push({ name: 'First Name', retry: () => this.editAndFill('inpFirsttNameEn', app.passport.firstName) });
     }
     if (app.passport.lastName && !await inputHasValue('inpLastNameEn')) {
       empty.push({ name: 'Last Name', retry: () => this.editAndFill('inpLastNameEn', app.passport.lastName) });
+    }
+
+    // ── Passport Names (AR — auto-translated, but may fail silently) ──
+    if (app.passport.firstName && !await inputHasValue('inpFirstNameAr')) {
+      empty.push({ name: 'First Name AR', retry: async () => {
+        await this.page.evaluate(() => (window as any).translateInputText?.('inpFirsttNameEn'));
+        await this.waitForTranslation('inpFirsttNameEn');
+      }});
+    }
+    if (app.passport.lastName && !await inputHasValue('inpLastNameAr')) {
+      empty.push({ name: 'Last Name AR', retry: async () => {
+        await this.page.evaluate(() => (window as any).translateInputText?.('inpLastNameEn'));
+        await this.waitForTranslation('inpLastNameEn');
+      }});
     }
 
     // ── Passport Details ──────────────────────────────────────────────────
@@ -1271,6 +1292,99 @@ export class GdrfaPortalPage {
     }
   }
 
+  /**
+   * Verifies the page transitioned to the Documents/Upload step after clicking Continue.
+   * Checks for file upload inputs, or a URL change indicating the upload page loaded.
+   * If the page is still on the form (e.g. validation errors), throws a descriptive error.
+   */
+  private async waitForUploadPage(): Promise<void> {
+    console.log('[Flow] Verifying transition to Documents/Upload page...');
+
+    // Give the page time to settle after popup dismissal / page transition
+    await this.waitForAjax(20000);
+    await this.waitForLoaderToDisappear();
+
+    // Check if we're on the upload page by looking for file inputs
+    const hasFileInputs = await this.page.locator('input[type="file"][data-document-type]').first()
+      .waitFor({ state: 'attached', timeout: 20000 })
+      .then(() => true).catch(() => false);
+
+    if (hasFileInputs) {
+      console.log('[Flow] Documents/Upload page confirmed (file inputs found).');
+      return;
+    }
+
+    // Not on upload page — diagnose why
+    const currentUrl = this.page.url();
+    console.warn(`[Flow] Upload page NOT reached. Current URL: ${currentUrl}`);
+
+    // Check if "Required field" validation errors are visible
+    const validationErrors = await this.page.evaluate(() => {
+      const errorEls = document.querySelectorAll('.ValidationMessage, [class*="Required"], span[style*="color: red"]');
+      return Array.from(errorEls)
+        .map(el => el.textContent?.trim() ?? '')
+        .filter(t => t.length > 0);
+    });
+    if (validationErrors.length > 0) {
+      console.error(`[Flow] Form validation errors present: ${JSON.stringify(validationErrors)}`);
+    }
+
+    // Check if the popup is still visible (didn't dismiss properly)
+    const popupStillVisible = await this.page.locator('div.MainPopup').isVisible({ timeout: 2000 }).catch(() => false);
+    if (popupStillVisible) {
+      console.warn('[Flow] Popup still visible — attempting re-dismiss...');
+      const popupFrame = await this.findPopupFrame(5000);
+      if (popupFrame) {
+        await this.handleExistingApplicationPopup(popupFrame);
+        await this.waitForAjax(20000);
+
+        // Re-check for file inputs after popup dismissal
+        const hasInputsNow = await this.page.locator('input[type="file"][data-document-type]').first()
+          .waitFor({ state: 'attached', timeout: 15000 })
+          .then(() => true).catch(() => false);
+        if (hasInputsNow) {
+          console.log('[Flow] Documents/Upload page confirmed after popup re-dismiss.');
+          return;
+        }
+      }
+    }
+
+    // If validation errors are present, retry Continue after a short wait
+    if (validationErrors.length > 0) {
+      console.log('[Flow] Retrying Continue after validation errors...');
+      const btn = this.page.locator('input[staticid="SmartChannels_EntryPermitNewTourism_btnContinue"]');
+      if (await btn.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await btn.click({ timeout: 10000 });
+        await this.waitForAjax(20000);
+        await this.waitForLoaderToDisappear();
+
+        // Handle popup if it appears
+        const popup2 = await this.findPopupFrame(10000);
+        if (popup2) {
+          await this.handleExistingApplicationPopup(popup2);
+          await this.waitForAjax(20000);
+        }
+
+        // Final check
+        const hasInputsFinal = await this.page.locator('input[type="file"][data-document-type]').first()
+          .waitFor({ state: 'attached', timeout: 15000 })
+          .then(() => true).catch(() => false);
+        if (hasInputsFinal) {
+          console.log('[Flow] Documents/Upload page confirmed on retry.');
+          return;
+        }
+      }
+    }
+
+    // Take a diagnostic screenshot
+    await this.page.screenshot({ path: 'test-results/upload-page-not-reached.png', fullPage: true }).catch(() => {});
+    throw new Error(
+      `[Flow] Failed to reach Documents/Upload page. ` +
+      `URL: ${currentUrl}. ` +
+      (validationErrors.length > 0 ? `Validation errors: ${validationErrors.join(', ')}` : 'No validation errors detected.')
+    );
+  }
+
   private async clickContinue(): Promise<void> {
     console.log('[Form] Clicking Continue...');
     const btn = this.page.locator('input[staticid="SmartChannels_EntryPermitNewTourism_btnContinue"]');
@@ -1367,6 +1481,26 @@ export class GdrfaPortalPage {
     // Wait for the popup iframe to close and page to settle
     await this.waitForAjax(30000);
     await this.waitForLoaderToDisappear();
+
+    // Verify the popup is actually gone — retry click if it's still visible
+    const popupGone = await this.page.locator('div.MainPopup').waitFor({ state: 'hidden', timeout: 10000 })
+      .then(() => true).catch(() => false);
+
+    if (!popupGone) {
+      console.warn('[Form] Popup still visible after Continue click — retrying...');
+      // Try clicking the button again via the frame
+      try {
+        await popupContinueBtn.click({ force: true, timeout: 5000 });
+        await this.waitForAjax(20000);
+        await this.waitForLoaderToDisappear();
+      } catch {
+        // Try clicking Close button as fallback
+        console.warn('[Form] Retry Continue failed — trying Close button...');
+        await closeBtn.click({ force: true, timeout: 5000 }).catch(() => {});
+        await this.waitForAjax(20000);
+      }
+    }
+
     console.log('[Form] Popup dismissed.');
   }
 
