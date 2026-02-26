@@ -6,7 +6,7 @@ auth/session.json
 data/passports/
 data/applications/processed/
 data/applications/applications.xlsx
-data/documents/
+data/documents/*/
 .env
 .env.*
 .DS_Store
