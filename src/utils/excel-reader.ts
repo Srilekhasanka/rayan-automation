@@ -8,6 +8,14 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { VisaApplication, ApplicationDocuments } from '../types/application-data';
 
+// Static contact/address fields shared by all applicants (Rayna Tourism office details)
+const CONTACT_DEFAULTS_FILE = path.resolve('data/config/contact-defaults.json');
+const contactDefaults = JSON.parse(fs.readFileSync(CONTACT_DEFAULTS_FILE, 'utf-8'));
+
+// Batch-level fields shared by all applicants (visit details, establishment, etc.)
+const BATCH_DEFAULTS_FILE = path.resolve('data/config/batch-defaults.json');
+const batchDefaults = JSON.parse(fs.readFileSync(BATCH_DEFAULTS_FILE, 'utf-8'));
+
 /**
  * Reads the Excel workbook at `filePath` and returns one VisaApplication per row.
  * Column headers must match those produced by scripts/json-to-excel.ts.
@@ -33,22 +41,22 @@ export function readApplicationsFromExcel(filePath: string): VisaApplication[] {
 
   return rows.map(r => ({
     hostSubmitter: {
-      establishmentNameEN: r['Establishment'] ?? '',
+      establishmentNameEN: batchDefaults.establishmentNameEN ?? '',
       establishmentNo:     '',
-      emirate:             r['UAE Emirate'] ?? 'Dubai',
+      emirate:             contactDefaults.uaeEmirate ?? 'Dubai',
       activity:            '',
       addressEN:           '',
       poBox:               '',
-      email:               r['Email'] ?? '',
-      mobileNumber:        r['Mobile Number'] ?? '',
+      email:               contactDefaults.email ?? '',
+      mobileNumber:        contactDefaults.mobileNumber ?? '',
     },
     visit: {
-      purposeOfVisit:      (r['Purpose of Visit'] || 'Tourism') as 'Tourism',
-      dateOfArrival:       r['Date of Arrival'] ?? '',
-      dateOfDeparture:     r['Date of Departure'] ?? '',
-      portOfEntry:         r['Port of Entry'] ?? '',
-      accommodationType:   r['Accommodation Type'] ?? '',
-      hotelOrPlaceOfStay:  r['Hotel / Place of Stay'] ?? '',
+      purposeOfVisit:      (batchDefaults.purposeOfVisit || 'Tourism') as 'Tourism',
+      dateOfArrival:       batchDefaults.dateOfArrival ?? '',
+      dateOfDeparture:     batchDefaults.dateOfDeparture ?? '',
+      portOfEntry:         batchDefaults.portOfEntry ?? '',
+      accommodationType:   batchDefaults.accommodationType ?? '',
+      hotelOrPlaceOfStay:  batchDefaults.hotelOrPlaceOfStay ?? '',
     },
     passport: {
       passportType:            (r['Passport Type'] || 'Normal') as any,
@@ -69,10 +77,10 @@ export function readApplicationsFromExcel(filePath: string): VisaApplication[] {
       passportPlaceOfIssueEN:  r['Passport Place of Issue'] ?? '',
     },
     applicant: {
-      isInsideUAE:         r['Inside UAE'] === 'Yes',
+      isInsideUAE:         batchDefaults.isInsideUAE ?? false,
       motherNameEN:        r['Mother Name'] ?? '',
       maritalStatus:       (r['Marital Status'] || 'UNSPECIFIC') as any,
-      relationshipToHost:  r['Relationship to Host'] || 'Not Related',
+      relationshipToHost:  batchDefaults.relationshipToHost || 'Not Related',
       religion:            (r['Religion'] || 'UNKNOWN') as any,
       faith:               r['Faith'] ?? '',
       education:           r['Education'] ?? '',
@@ -81,19 +89,19 @@ export function readApplicationsFromExcel(filePath: string): VisaApplication[] {
       comingFromCountry:   r['Coming From Country'] ?? '',
     },
     contact: {
-      email:                 r['Email'] ?? '',
-      mobileNumber:          r['Mobile Number'] ?? '',
+      email:                 contactDefaults.email ?? '',
+      mobileNumber:          contactDefaults.mobileNumber ?? '',
       approvalEmailCopy:     '',
-      preferredSMSLanguage:  (r['SMS Language'] || 'ENGLISH') as 'ENGLISH' | 'ARABIC',
-      uaeEmirate:            r['UAE Emirate'] || 'Dubai',
-      uaeCity:               r['UAE City'] || 'Dubai',
-      uaeArea:               r['UAE Area'] || undefined,
-      uaeStreet:             r['UAE Street'] || undefined,
-      uaeBuilding:           r['UAE Building'] || undefined,
-      uaeFloor:              r['UAE Floor'] || undefined,
-      uaeFlat:               r['UAE Flat'] || undefined,
+      preferredSMSLanguage:  (contactDefaults.preferredSMSLanguage || 'ENGLISH') as 'ENGLISH' | 'ARABIC',
+      uaeEmirate:            contactDefaults.uaeEmirate || 'Dubai',
+      uaeCity:               contactDefaults.uaeCity || 'Dubai',
+      uaeArea:               contactDefaults.uaeArea || undefined,
+      uaeStreet:             contactDefaults.uaeStreet || undefined,
+      uaeBuilding:           contactDefaults.uaeBuilding || undefined,
+      uaeFloor:              contactDefaults.uaeFloor || undefined,
+      uaeFlat:               contactDefaults.uaeFlat || undefined,
       outsideCountry:        r['Outside Country'] || undefined,
-      outsideMobile:         r['Outside Mobile'] || undefined,
+      outsideMobile:         contactDefaults.outsideMobile || undefined,
       outsideCity:           r['Outside City'] || undefined,
       outsideAddress:        r['Outside Address'] || undefined,
     },
@@ -102,9 +110,13 @@ export function readApplicationsFromExcel(filePath: string): VisaApplication[] {
 }
 
 /**
- * Resolves document file paths from a folder.
+ * Resolves document file paths from a folder name.
+ * The folder name (from the Excel "Documents Folder" column) is resolved
+ * relative to data/documents/. E.g. "zambia" → data/documents/zambia/
  * Looks for files matching the portal's document type names.
  */
+const DOCUMENTS_BASE = path.resolve('data/documents');
+
 function resolveDocuments(folder: string): ApplicationDocuments {
   const empty: ApplicationDocuments = {
     sponsoredPassportPage1:   '',
@@ -116,7 +128,7 @@ function resolveDocuments(folder: string): ApplicationDocuments {
 
   if (!folder) return empty;
 
-  const absFolder = path.resolve(folder);
+  const absFolder = path.join(DOCUMENTS_BASE, folder);
   if (!fs.existsSync(absFolder)) return empty;
 
   const files = fs.readdirSync(absFolder);

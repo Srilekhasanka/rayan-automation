@@ -34,7 +34,7 @@ const COLUMNS: [string, (app: any) => string][] = [
   ['Passport Expiry Date',  a => a.passport?.passportExpiryDate ?? ''],
   ['Passport Place of Issue', a => a.passport?.passportPlaceOfIssueEN ?? ''],
 
-  // Applicant details
+  // Applicant details (per-applicant — varies by person)
   ['Mother Name',          a => a.applicant?.motherNameEN ?? ''],
   ['Marital Status',       a => a.applicant?.maritalStatus ?? ''],
   ['Religion',             a => a.applicant?.religion ?? ''],
@@ -43,40 +43,17 @@ const COLUMNS: [string, (app: any) => string][] = [
   ['Profession',           a => a.applicant?.profession ?? ''],
   ['First Language',       a => a.applicant?.firstLanguage ?? ''],
   ['Coming From Country',  a => a.applicant?.comingFromCountry ?? ''],
-  ['Inside UAE',           a => a.applicant?.isInsideUAE ? 'Yes' : 'No'],
-  ['Relationship to Host', a => a.applicant?.relationshipToHost ?? ''],
 
-  // Visit details
-  ['Purpose of Visit',     a => a.visit?.purposeOfVisit ?? ''],
-  ['Date of Arrival',      a => a.visit?.dateOfArrival ?? ''],
-  ['Date of Departure',    a => a.visit?.dateOfDeparture ?? ''],
-  ['Port of Entry',        a => a.visit?.portOfEntry ?? ''],
-  ['Accommodation Type',   a => a.visit?.accommodationType ?? ''],
-  ['Hotel / Place of Stay', a => a.visit?.hotelOrPlaceOfStay ?? ''],
-
-  // Contact
-  ['Email',                a => a.contact?.email ?? ''],
-  ['Mobile Number',        a => a.contact?.mobileNumber ?? ''],
-  ['SMS Language',         a => a.contact?.preferredSMSLanguage ?? ''],
-  ['UAE Emirate',          a => a.contact?.uaeEmirate ?? ''],
-  ['UAE City',             a => a.contact?.uaeCity ?? ''],
-  ['UAE Area',             a => a.contact?.uaeArea ?? ''],
-  ['UAE Street',           a => a.contact?.uaeStreet ?? ''],
-  ['UAE Building',         a => a.contact?.uaeBuilding ?? ''],
-  ['UAE Floor',            a => a.contact?.uaeFloor ?? ''],
-  ['UAE Flat',             a => a.contact?.uaeFlat ?? ''],
-
-  // Address Outside UAE
+  // Address Outside UAE (per-applicant — varies by nationality)
   ['Outside Country',      a => a.contact?.outsideCountry ?? ''],
-  ['Outside Mobile',       a => a.contact?.outsideMobile ?? ''],
   ['Outside City',         a => a.contact?.outsideCity ?? ''],
   ['Outside Address',      a => a.contact?.outsideAddress ?? ''],
 
-  // Host / submitter
-  ['Establishment',        a => a.hostSubmitter?.establishmentNameEN ?? ''],
-
   // Documents folder (relative path to folder containing document files)
   ['Documents Folder',     a => a.documentsFolder ?? ''],
+
+  // Batch-level fields (Inside UAE, Relationship, Visit details, Establishment)
+  // are in data/config/batch-defaults.json
 ];
 
 function main(): void {

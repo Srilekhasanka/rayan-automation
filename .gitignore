@@ -2,8 +2,10 @@ node_modules/
 dist/
 test-results/
 playwright-report/
+auth/session.json
 data/passports/
 data/applications/processed/
+data/applications/applications.xlsx
 data/documents/
 .env
 .env.*
